@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MASTER_ADMIN
+  PARTNER
+  CLIENT
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum ChangeRequestStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  role          Role
+  name          String
+  phone         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  partner       Partner?
+  client        Client?
+}
+
+model Partner {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug            String   @unique
+  bio             String?  @db.Text
+  photoUrl        String?
+  company         String?
+  website         String?
+  paypalEmail     String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  clients         Client[]
+  commissions     Commission[]
+  withdrawals     WithdrawalRequest[]
+}
+
+model Client {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partnerId     String?
+  partner       Partner? @relation(fields: [partnerId], references: [id])
+  company       String?
+  address       String?
+  city          String?
+  state         String?
+  zip           String?
+  isActive      Boolean  @default(true)
+  stripeCustomerId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  subscriptions ClientSubscription[]
+  payments      Payment[]
+  changeRequests ChangeRequest[]
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  name          String
+  description   String?  @db.Text
+  monthlyPrice  Decimal  @db.Decimal(10, 2)
+  setupFee      Decimal  @db.Decimal(10, 2) @default(0)
+  features      String?  @db.Text
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  subscriptions ClientSubscription[]
+}
+
+model ClientSubscription {
+  id          String   @id @default(uuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  status      String   @default("active")
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  monthlyPrice Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  clientId        String
+  client          Client        @relation(fields: [clientId], references: [id])
+  amount          Decimal       @db.Decimal(10, 2)
+  description     String?
+  status          PaymentStatus @default(PENDING)
+  stripePaymentId String?
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  commission      Commission?
+}
+
+model Commission {
+  id          String   @id @default(uuid())
+  partnerId   String
+  partner     Partner  @relation(fields: [partnerId], references: [id])
+  paymentId   String   @unique
+  payment     Payment  @relation(fields: [paymentId], references: [id])
+  amount      Decimal  @db.Decimal(10, 2)
+  rate        Decimal  @db.Decimal(5, 4) @default(0.2500)
+  isPaid      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model WithdrawalRequest {
+  id          String           @id @default(uuid())
+  partnerId   String
+  partner     Partner          @relation(fields: [partnerId], references: [id])
+  amount      Decimal          @db.Decimal(10, 2)
+  status      WithdrawalStatus @default(PENDING)
+  paypalEmail String
+  adminNote   String?
+  processedAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model ChangeRequest {
+  id          String              @id @default(uuid())
+  clientId    String
+  client      Client              @relation(fields: [clientId], references: [id])
+  title       String
+  description String              @db.Text
+  status      ChangeRequestStatus @default(OPEN)
+  adminNote   String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   @db.Text
+  encrypted Boolean  @default(false)
+  label     String?
+  group     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
