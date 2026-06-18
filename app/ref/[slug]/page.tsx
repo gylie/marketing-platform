@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { notFound, redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
+import { notFound } from 'next/navigation'
 import PartnerReferralCard from './PartnerReferralCard'
 
 export default async function ReferralPage({ params }: { params: { slug: string } }) {
@@ -9,13 +8,6 @@ export default async function ReferralPage({ params }: { params: { slug: string 
     include: { user: true },
   })
   if (!partner) notFound()
-
-  cookies().set('referral_slug', params.slug, {
-    path: '/',
-    maxAge: 60 * 60 * 24 * 30,
-    httpOnly: false,
-    sameSite: 'lax',
-  })
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-8">

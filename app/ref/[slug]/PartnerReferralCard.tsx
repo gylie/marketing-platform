@@ -1,7 +1,12 @@
 'use client'
 import Link from 'next/link'
+import { useEffect } from 'react'
 
 export default function PartnerReferralCard({ name, company, bio, photoUrl, slug }: { name: string; company: string; bio: string; photoUrl: string; slug: string }) {
+  useEffect(() => {
+    const maxAge = 60 * 60 * 24 * 30
+    document.cookie = `referral_slug=${slug}; path=/; max-age=${maxAge}; samesite=lax`
+  }, [slug])
   return (
     <div className="card p-8 max-w-md w-full text-center">
       {photoUrl ? (
