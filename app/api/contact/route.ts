@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { sendEmail } from '@/lib/email'
+import { getSetting } from '@/lib/settings'
 
 export async function POST(req: Request) {
   const { name, email, message } = await req.json()
@@ -8,7 +9,11 @@ export async function POST(req: Request) {
   }
 
   try {
-    const adminEmail = process.env.ADMIN_EMAIL || (await import('@/lib/settings').then(m => m.getSetting('email_from')))
+    const adminEmail =
+      process.env.ADMIN_EMAIL ||
+      (await getSetting('email_from')) ||
+      'contact@businessmold.com'
+
     await sendEmail({
       to: adminEmail,
       subject: `Contact form: ${name}`,

@@ -38,7 +38,7 @@ export async function POST(req: Request) {
   })
 
   try {
-    const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL}/login`
+    const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/login`
     await sendEmail({ to: email, subject: 'Welcome to our Partner Program!', html: partnerWelcomeEmail(name, loginUrl) })
   } catch {}
 

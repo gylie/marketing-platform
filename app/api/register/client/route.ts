@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   })
 
   try {
-    const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL}/login`
+    const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/login`
     await sendEmail({ to: email, subject: 'Welcome!', html: clientWelcomeEmail(name, loginUrl) })
   } catch {}
 
